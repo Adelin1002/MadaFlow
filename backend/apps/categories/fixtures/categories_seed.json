@@ -1,0 +1,14 @@
+[
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000001", "fields": {"name": "Route", "slug": "route", "icon": "road", "color": "#8B5E3C", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000002", "fields": {"name": "Circulation", "slug": "circulation", "icon": "traffic", "color": "#D9822B", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000003", "fields": {"name": "Transport", "slug": "transport", "icon": "bus", "color": "#2E7D6E", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000004", "fields": {"name": "Éclairage", "slug": "eclairage", "icon": "lightbulb", "color": "#E8B400", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000005", "fields": {"name": "Déchets", "slug": "dechets", "icon": "trash", "color": "#6B7280", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000006", "fields": {"name": "Eau", "slug": "eau", "icon": "droplet", "color": "#2B7FD9", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000007", "fields": {"name": "Électricité", "slug": "electricite", "icon": "bolt", "color": "#C9A227", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000008", "fields": {"name": "Sécurité", "slug": "securite", "icon": "shield", "color": "#B91C1C", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000009", "fields": {"name": "Environnement", "slug": "environnement", "icon": "leaf", "color": "#3E8914", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000010", "fields": {"name": "Infrastructure", "slug": "infrastructure", "icon": "building", "color": "#1B2A38", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000011", "fields": {"name": "Commerce", "slug": "commerce", "icon": "store", "color": "#7C3AED", "is_active": true}},
+  {"model": "categories.category", "pk": "10000000-0000-0000-0000-000000000012", "fields": {"name": "Autre", "slug": "autre", "icon": "dots", "color": "#9CA3AF", "is_active": true}}
+]

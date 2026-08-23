@@ -1,0 +1,24 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Dépendances système requises par GeoDjango (PostGIS côté client)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    binutils \
+    libproj-dev \
+    gdal-bin \
+    libgdal-dev \
+    libgeos-dev \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements/ /app/requirements/
+RUN pip install --no-cache-dir -r requirements/dev.txt
+
+COPY . /app/
+
+EXPOSE 8000
