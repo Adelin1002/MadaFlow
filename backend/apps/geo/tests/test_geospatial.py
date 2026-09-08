@@ -5,6 +5,7 @@ essentiel puisque ces requêtes serviront aux futures fonctionnalités de
 recherche de proximité (dashboard entreprise, section 13) et de détection
 de doublons géographiques (section 9).
 """
+
 import pytest
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
@@ -44,9 +45,7 @@ class TestLocationProximity:
         mid = Location.objects.create(point=Point(47.1200, -21.4536, srid=4326))
         far = Location.objects.create(point=Point(47.5079, -18.8792, srid=4326))
 
-        ordered = list(
-            Location.objects.annotate(distance=Distance("point", reference)).order_by("distance")
-        )
+        ordered = list(Location.objects.annotate(distance=Distance("point", reference)).order_by("distance"))
 
         assert ordered[0] == near
         assert ordered[-1] == far
@@ -60,17 +59,18 @@ class TestAreaContainment:
         from apps.geo.models import Area
 
         # Petit polygone couvrant un carré autour du centre de Fianarantsoa.
-        polygon = Polygon((
-            (47.07, -21.46),
-            (47.10, -21.46),
-            (47.10, -21.44),
-            (47.07, -21.44),
-            (47.07, -21.46),
-        ), srid=4326)
-
-        area = Area.objects.create(
-            name="Zone test", polygon=polygon, created_by=UserFactory()
+        polygon = Polygon(
+            (
+                (47.07, -21.46),
+                (47.10, -21.46),
+                (47.10, -21.44),
+                (47.07, -21.44),
+                (47.07, -21.46),
+            ),
+            srid=4326,
         )
+
+        area = Area.objects.create(name="Zone test", polygon=polygon, created_by=UserFactory())
 
         inside = Point(47.0833, -21.4536, srid=4326)
         outside = Point(47.5079, -18.8792, srid=4326)

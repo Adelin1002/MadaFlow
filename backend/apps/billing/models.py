@@ -21,9 +21,7 @@ class Subscription(models.Model):
 
 class Payment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    subscription = models.ForeignKey(
-        Subscription, on_delete=models.CASCADE, related_name="payments"
-    )
+    subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE, related_name="payments")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default="MGA")
     # Référence externe uniquement (ex: Stripe payment_intent id).

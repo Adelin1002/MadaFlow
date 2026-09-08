@@ -1,0 +1,5 @@
+[flake8]
+max-line-length = 110
+exclude = migrations,__pycache__,.venv
+per-file-ignores =
+    config/settings/*.py:F401,F403,F405

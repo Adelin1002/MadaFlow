@@ -6,11 +6,9 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-
     # Documentation API
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="docs"),
-
     # API v1 — chaque app expose ses propres urls.py (créés à l'étape suivante)
     path("api/v1/auth/", include("apps.users.urls_auth")),
     path("api/v1/users/", include("apps.users.urls")),
@@ -27,4 +25,5 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     import debug_toolbar
+
     urlpatterns += [path("__debug__/", include(debug_toolbar.urls))]

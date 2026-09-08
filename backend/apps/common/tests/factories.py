@@ -3,6 +3,7 @@ Factories partagées entre les apps. Centralisées ici plutôt que dupliquées
 dans chaque app, pour que UserFactory/CategoryFactory/LocationFactory restent
 cohérentes partout où elles sont utilisées.
 """
+
 import factory
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Point

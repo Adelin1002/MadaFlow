@@ -32,7 +32,5 @@ class AIAnalysis(models.Model):
     confidence = models.FloatField(null=True, blank=True)
 
     # Distinction obligatoire (section 29) entre données réelles, démo, prédites
-    data_source = models.CharField(
-        max_length=20, choices=DataSource.choices, default=DataSource.REAL
-    )
+    data_source = models.CharField(max_length=20, choices=DataSource.choices, default=DataSource.REAL)
     created_at = models.DateTimeField(auto_now_add=True)

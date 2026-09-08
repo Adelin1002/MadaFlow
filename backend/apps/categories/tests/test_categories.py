@@ -25,6 +25,7 @@ class TestCategoryPermissions:
 
     def test_business_cannot_create_category(self, business_user):
         from rest_framework.test import APIClient
+
         client = APIClient()
         client.force_authenticate(user=business_user)
         url = reverse("categories:category-list")

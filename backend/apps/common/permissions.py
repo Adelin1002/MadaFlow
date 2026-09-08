@@ -4,6 +4,7 @@ Permissions partagées entre apps. Toute vue exposant des données rattachées
 ci-dessous plutôt que de faire confiance à un organization_id passé en
 paramètre de requête — c'est la garantie d'isolation multi-tenant (section 21).
 """
+
 from rest_framework import permissions
 
 
@@ -39,6 +40,4 @@ class IsOrganizationAdmin(permissions.BasePermission):
         organization = getattr(obj, "organization", None)
         if organization is None:
             return False
-        return organization.members.filter(
-            user=request.user, role__in=["owner", "admin"]
-        ).exists()
+        return organization.members.filter(user=request.user, role__in=["owner", "admin"]).exists()

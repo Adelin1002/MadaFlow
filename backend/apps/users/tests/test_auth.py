@@ -8,58 +8,73 @@ from apps.common.tests.factories import UserFactory
 class TestRegister:
     def test_register_creates_citizen_by_default(self, api_client):
         url = reverse("auth:register")
-        response = api_client.post(url, {
-            "username": "rakoto",
-            "email": "rakoto@example.mg",
-            "password": "SuperSecret123!",
-            "password2": "SuperSecret123!",
-        })
+        response = api_client.post(
+            url,
+            {
+                "username": "rakoto",
+                "email": "rakoto@example.mg",
+                "password": "SuperSecret123!",
+                "password2": "SuperSecret123!",
+            },
+        )
         assert response.status_code == 201
         assert response.data["user_type"] if "user_type" in response.data else True
 
     def test_register_rejects_password_mismatch(self, api_client):
         url = reverse("auth:register")
-        response = api_client.post(url, {
-            "username": "rakoto2",
-            "email": "rakoto2@example.mg",
-            "password": "SuperSecret123!",
-            "password2": "AutreChose123!",
-        })
+        response = api_client.post(
+            url,
+            {
+                "username": "rakoto2",
+                "email": "rakoto2@example.mg",
+                "password": "SuperSecret123!",
+                "password2": "AutreChose123!",
+            },
+        )
         assert response.status_code == 400
         assert "password2" in response.data
 
     def test_register_cannot_self_assign_platform_admin(self, api_client):
         """Sécurité critique : impossible de s'auto-créer administrateur (section 24)."""
         url = reverse("auth:register")
-        response = api_client.post(url, {
-            "username": "hacker",
-            "email": "hacker@example.mg",
-            "password": "SuperSecret123!",
-            "password2": "SuperSecret123!",
-            "user_type": "platform_admin",
-        })
+        response = api_client.post(
+            url,
+            {
+                "username": "hacker",
+                "email": "hacker@example.mg",
+                "password": "SuperSecret123!",
+                "password2": "SuperSecret123!",
+                "user_type": "platform_admin",
+            },
+        )
         assert response.status_code == 400
         assert "user_type" in response.data
 
     def test_register_cannot_self_assign_municipal_admin(self, api_client):
         url = reverse("auth:register")
-        response = api_client.post(url, {
-            "username": "hacker2",
-            "email": "hacker2@example.mg",
-            "password": "SuperSecret123!",
-            "password2": "SuperSecret123!",
-            "user_type": "municipal_admin",
-        })
+        response = api_client.post(
+            url,
+            {
+                "username": "hacker2",
+                "email": "hacker2@example.mg",
+                "password": "SuperSecret123!",
+                "password2": "SuperSecret123!",
+                "user_type": "municipal_admin",
+            },
+        )
         assert response.status_code == 400
 
     def test_register_rejects_weak_password(self, api_client):
         url = reverse("auth:register")
-        response = api_client.post(url, {
-            "username": "rakoto3",
-            "email": "rakoto3@example.mg",
-            "password": "1234",
-            "password2": "1234",
-        })
+        response = api_client.post(
+            url,
+            {
+                "username": "rakoto3",
+                "email": "rakoto3@example.mg",
+                "password": "1234",
+                "password2": "1234",
+            },
+        )
         assert response.status_code == 400
         assert "password" in response.data
 
@@ -103,5 +118,6 @@ class TestMe:
     def test_me_cannot_change_own_user_type(self, citizen_client, citizen):
         url = reverse("users:me")
         response = citizen_client.patch(url, {"user_type": "platform_admin"})
+        assert response.status_code == 200  # requête acceptée mais champ ignoré
         citizen.refresh_from_db()
         assert citizen.user_type == "citizen"

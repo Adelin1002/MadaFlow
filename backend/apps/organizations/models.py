@@ -34,9 +34,7 @@ class OrganizationMember(models.Model):
         ADMIN = "admin", "Admin"
         MEMBER = "member", "Membre"
 
-    organization = models.ForeignKey(
-        Organization, on_delete=models.CASCADE, related_name="members"
-    )
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="members")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
     joined_at = models.DateTimeField(auto_now_add=True)

@@ -47,9 +47,7 @@ class ReportSerializer(serializers.ModelSerializer):
     # plutôt que d'exposer directement le modèle Location en écriture.
     latitude = serializers.FloatField(write_only=True, required=False)
     longitude = serializers.FloatField(write_only=True, required=False)
-    approximate_address = serializers.CharField(
-        write_only=True, required=False, allow_blank=True
-    )
+    approximate_address = serializers.CharField(write_only=True, required=False, allow_blank=True)
     district = serializers.PrimaryKeyRelatedField(
         queryset=District.objects.all(), write_only=True, required=False, allow_null=True
     )
@@ -57,15 +55,36 @@ class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = [
-            "id", "reporter", "category", "location",
-            "latitude", "longitude", "approximate_address", "district",
-            "title", "description", "severity", "status",
-            "duplicate_of", "images", "confirmations_count",
-            "created_at", "updated_at", "resolved_at",
+            "id",
+            "reporter",
+            "category",
+            "location",
+            "latitude",
+            "longitude",
+            "approximate_address",
+            "district",
+            "title",
+            "description",
+            "severity",
+            "status",
+            "duplicate_of",
+            "images",
+            "confirmations_count",
+            "created_at",
+            "updated_at",
+            "resolved_at",
         ]
         read_only_fields = [
-            "id", "reporter", "location", "status", "duplicate_of",
-            "images", "confirmations_count", "created_at", "updated_at", "resolved_at",
+            "id",
+            "reporter",
+            "location",
+            "status",
+            "duplicate_of",
+            "images",
+            "confirmations_count",
+            "created_at",
+            "updated_at",
+            "resolved_at",
         ]
 
     def validate(self, attrs):

@@ -3,6 +3,7 @@ Settings utilisés uniquement pour l'exécution de la suite de tests.
 Même moteur PostGIS que dev/prod (pas de SQLite/SpatiaLite) pour que les
 tests géospatiaux couvrent le comportement réel de production.
 """
+
 from .base import *  # noqa: F401,F403
 
 DEBUG = False

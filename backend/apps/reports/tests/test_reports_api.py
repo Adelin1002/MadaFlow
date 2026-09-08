@@ -47,7 +47,7 @@ class TestReportCreate:
 
         report = Report.objects.get(id=response.data["id"])
         assert round(report.location.point.y, 4) == -21.4536  # latitude
-        assert round(report.location.point.x, 4) == 47.0833   # longitude
+        assert round(report.location.point.x, 4) == 47.0833  # longitude
 
     def test_create_rejects_out_of_range_latitude(self, citizen_client):
         category = CategoryFactory()
@@ -63,6 +63,21 @@ class TestReportCreate:
         response = citizen_client.post(url, payload, format="json")
         assert response.status_code == 400
         assert "latitude" in response.data
+
+    def test_create_rejects_out_of_range_longitude(self, citizen_client):
+        category = CategoryFactory()
+        url = reverse("reports:report-list")
+        payload = {
+            "category": str(category.id),
+            "title": "Test",
+            "description": "Test",
+            "severity": "low",
+            "latitude": -21.4536,
+            "longitude": 300,
+        }
+        response = citizen_client.post(url, payload, format="json")
+        assert response.status_code == 400
+        assert "longitude" in response.data
 
     def test_create_requires_latitude_and_longitude(self, citizen_client):
         category = CategoryFactory()
@@ -103,6 +118,21 @@ class TestReportPermissions:
         assert response.status_code == 200
         assert response.data["title"] == "Titre corrigé"
 
+    def test_owner_can_update_location(self, citizen_client, citizen):
+        """Test géospatial : la mise à jour lat/lon déplace bien le point PostGIS existant."""
+        report = ReportFactory(reporter=citizen)
+        url = reverse("reports:report-detail", args=[report.id])
+        response = citizen_client.patch(
+            url,
+            {"latitude": -18.8792, "longitude": 47.5079, "approximate_address": "Antananarivo"},
+            format="json",
+        )
+        assert response.status_code == 200
+        report.refresh_from_db()
+        assert round(report.location.point.y, 4) == -18.8792
+        assert round(report.location.point.x, 4) == 47.5079
+        assert report.location.approximate_address == "Antananarivo"
+
     def test_non_owner_cannot_update_report(self, other_citizen_client, citizen):
         report = ReportFactory(reporter=citizen)
         url = reverse("reports:report-detail", args=[report.id])
@@ -120,6 +150,7 @@ class TestReportPermissions:
         report = ReportFactory(reporter=citizen, status=Report.Status.NEW)
         url = reverse("reports:report-detail", args=[report.id])
         response = citizen_client.patch(url, {"status": "resolved"}, format="json")
+        assert response.status_code == 200  # accepté mais status ignoré, pas d'erreur
         report.refresh_from_db()
         assert report.status == Report.Status.NEW
 
@@ -195,6 +226,7 @@ class TestReportFilters:
         district_a = DistrictFactory()
         district_b = DistrictFactory()
         from apps.common.tests.factories import LocationFactory
+
         ReportFactory(location=LocationFactory(district=district_a))
         ReportFactory(location=LocationFactory(district=district_b))
 

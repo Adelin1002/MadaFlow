@@ -17,9 +17,7 @@ class Municipality(models.Model):
 
 class District(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    municipality = models.ForeignKey(
-        Municipality, on_delete=models.CASCADE, related_name="districts"
-    )
+    municipality = models.ForeignKey(Municipality, on_delete=models.CASCADE, related_name="districts")
     name = models.CharField(max_length=150)
     boundary = models.MultiPolygonField(geography=True, null=True, blank=True)
 
@@ -60,9 +58,7 @@ class Area(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=150)
     polygon = models.PolygonField(geography=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="areas"
-    )
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="areas")
     organization = models.ForeignKey(
         "organizations.Organization",
         on_delete=models.CASCADE,

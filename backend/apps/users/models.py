@@ -11,9 +11,7 @@ class User(AbstractUser):
         PLATFORM_ADMIN = "platform_admin", "Administrateur plateforme"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user_type = models.CharField(
-        max_length=20, choices=UserType.choices, default=UserType.CITIZEN
-    )
+    user_type = models.CharField(max_length=20, choices=UserType.choices, default=UserType.CITIZEN)
     phone_number = models.CharField(max_length=20, blank=True)
     is_verified = models.BooleanField(default=False)
 

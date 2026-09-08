@@ -2,6 +2,7 @@
 Settings de base — communs à dev/prod.
 Ne jamais mettre de secrets en dur ici : tout passe par les variables d'environnement.
 """
+
 from pathlib import Path
 from datetime import timedelta
 from decouple import config, Csv
@@ -20,14 +21,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",  # GeoDjango / PostGIS
-
     # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
     "django_filters",
     "drf_spectacular",
-
     # MadaFlow apps métier — modular monolith (une app = un domaine)
     "apps.users",
     "apps.organizations",
@@ -108,12 +107,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- REST Framework ---
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
@@ -136,12 +131,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=config("JWT_ACCESS_TOKEN_LIFETIME_MIN", default=15, cast=int)
-    ),
-    "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=config("JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7, cast=int)
-    ),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=config("JWT_ACCESS_TOKEN_LIFETIME_MIN", default=15, cast=int)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=config("JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7, cast=int)),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 }
@@ -158,8 +149,12 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 # --- IA (abstraction AIProvider, voir apps/ai_engine) ---
-AI_PROVIDER = config("AI_PROVIDER", default="stub")
+AI_PROVIDER = config("AI_PROVIDER", default="rule_based")
 ANTHROPIC_API_KEY = config("ANTHROPIC_API_KEY", default="")
+# Score minimal (0.0-1.0) de detect_duplicates au-delà duquel un signalement
+# est automatiquement lié à un autre via duplicate_of. En dessous, le
+# résultat reste une recommandation consultable par un admin (section 8).
+AI_DUPLICATE_AUTO_LINK_THRESHOLD = config("AI_DUPLICATE_AUTO_LINK_THRESHOLD", default=0.85, cast=float)
 
 # --- Paiement ---
 PAYMENT_PROVIDER = config("PAYMENT_PROVIDER", default="stripe")

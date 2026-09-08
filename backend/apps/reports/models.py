@@ -18,16 +18,12 @@ class Report(models.Model):
         CRITICAL = "critical", "Critique"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    reporter = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reports"
-    )
+    reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reports")
     category = models.ForeignKey("categories.Category", on_delete=models.PROTECT)
 
     # Localisation extraite en modèle séparé (apps.geo.Location) — réutilisable,
     # indexée, et point d'ancrage commun pour la détection de doublons géospatiaux.
-    location = models.ForeignKey(
-        "geo.Location", on_delete=models.PROTECT, related_name="reports"
-    )
+    location = models.ForeignKey("geo.Location", on_delete=models.PROTECT, related_name="reports")
 
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -63,9 +59,7 @@ class ReportImage(models.Model):
 
 
 class ReportConfirmation(models.Model):
-    report = models.ForeignKey(
-        Report, on_delete=models.CASCADE, related_name="confirmations"
-    )
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="confirmations")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
