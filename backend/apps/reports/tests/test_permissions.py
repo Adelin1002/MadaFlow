@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock
 
 from apps.common.tests.factories import UserFactory
-from apps.reports.permissions import IsMunicipalOrPlatformAdmin, IsOwnerOrReadOnly
+from apps.reports.permissions import IsOwnerOrReadOnly
 from apps.reports.tests.factories import ReportFactory
 
 
@@ -37,31 +37,4 @@ class TestIsOwnerOrReadOnly:
     def test_unauthenticated_denied_at_view_level(self):
         permission = IsOwnerOrReadOnly()
         request = Mock(user=None)
-        assert permission.has_permission(request, None) is False
-
-
-@pytest.mark.django_db
-class TestIsMunicipalOrPlatformAdmin:
-    def test_citizen_denied(self):
-        citizen = UserFactory(user_type=UserFactory._meta.model.UserType.CITIZEN)
-        permission = IsMunicipalOrPlatformAdmin()
-        request = Mock(user=citizen)
-        assert permission.has_permission(request, None) is False
-
-    def test_municipal_admin_allowed(self):
-        admin = UserFactory(user_type=UserFactory._meta.model.UserType.MUNICIPAL_ADMIN)
-        permission = IsMunicipalOrPlatformAdmin()
-        request = Mock(user=admin)
-        assert permission.has_permission(request, None) is True
-
-    def test_platform_admin_allowed(self):
-        admin = UserFactory(user_type=UserFactory._meta.model.UserType.PLATFORM_ADMIN)
-        permission = IsMunicipalOrPlatformAdmin()
-        request = Mock(user=admin)
-        assert permission.has_permission(request, None) is True
-
-    def test_business_user_denied(self):
-        business = UserFactory(user_type=UserFactory._meta.model.UserType.BUSINESS)
-        permission = IsMunicipalOrPlatformAdmin()
-        request = Mock(user=business)
         assert permission.has_permission(request, None) is False

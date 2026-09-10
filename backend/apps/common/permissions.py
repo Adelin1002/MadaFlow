@@ -5,7 +5,10 @@ ci-dessous plutôt que de faire confiance à un organization_id passé en
 paramètre de requête — c'est la garantie d'isolation multi-tenant (section 21).
 """
 
+from django.contrib.auth import get_user_model
 from rest_framework import permissions
+
+User = get_user_model()
 
 
 class IsPlatformAdminOrReadOnly(permissions.BasePermission):
@@ -17,6 +20,22 @@ class IsPlatformAdminOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user.user_type == request.user.UserType.PLATFORM_ADMIN
+
+
+class IsMunicipalOrPlatformAdmin(permissions.BasePermission):
+    """
+    Réservé aux rôles habilités à traiter administrativement un signalement
+    (section 5) — utilisée par apps.reports (changement de statut) et
+    apps.scoring (endpoints d'analytics), d'où sa place ici plutôt que dans
+    une seule des deux apps.
+    """
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.user_type in (User.UserType.MUNICIPAL_ADMIN, User.UserType.PLATFORM_ADMIN)
+        )
 
 
 class IsOrganizationMember(permissions.BasePermission):

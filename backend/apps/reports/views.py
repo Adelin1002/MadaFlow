@@ -5,11 +5,12 @@ from rest_framework.response import Response
 
 from apps.ai_engine.serializers import AIAnalysisSerializer
 from apps.ai_engine.tasks import run_report_ai_pipeline
+from apps.common.permissions import IsMunicipalOrPlatformAdmin
 from apps.scoring.tasks import compute_priority_score_task
 
 from .filters import ReportFilter
 from .models import Report, ReportConfirmation
-from .permissions import IsMunicipalOrPlatformAdmin, IsOwnerOrReadOnly
+from .permissions import IsOwnerOrReadOnly
 from .serializers import ReportImageSerializer, ReportSerializer, ReportStatusSerializer
 
 

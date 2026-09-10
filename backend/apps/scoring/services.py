@@ -6,7 +6,7 @@ explicable : chaque facteur, son poids et sa contribution sont conservés
 dans PriorityScore.explanation. Aucune décision administrative n'est prise
 automatiquement à partir de ce score (section 8) : il informe, il ne décide
 pas — le statut du signalement reste entièrement entre les mains des admins
-(voir apps.reports.permissions.IsMunicipalOrPlatformAdmin).
+(voir apps.common.permissions.IsMunicipalOrPlatformAdmin).
 
 Un facteur explicitement prévu par le cahier des charges n'est PAS implémenté
 ici : la "proximité d'une zone importante". Faute de source de données réelle
