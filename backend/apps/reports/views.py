@@ -5,6 +5,7 @@ from rest_framework.response import Response
 
 from apps.ai_engine.serializers import AIAnalysisSerializer
 from apps.ai_engine.tasks import run_report_ai_pipeline
+from apps.scoring.tasks import compute_priority_score_task
 
 from .filters import ReportFilter
 from .models import Report, ReportConfirmation
@@ -14,7 +15,7 @@ from .serializers import ReportImageSerializer, ReportSerializer, ReportStatusSe
 
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = (
-        Report.objects.select_related("location", "category", "reporter")
+        Report.objects.select_related("location", "category", "reporter", "priority_score")
         .prefetch_related("images", "confirmations")
         .order_by("-created_at")
     )
@@ -23,7 +24,7 @@ class ReportViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     filterset_class = ReportFilter
     search_fields = ["title", "description"]
-    ordering_fields = ["created_at", "severity"]
+    ordering_fields = ["created_at", "severity", "priority_score__score"]
 
     def perform_create(self, serializer):
         report = serializer.save()
@@ -44,6 +45,8 @@ class ReportViewSet(viewsets.ModelViewSet):
         _, created = ReportConfirmation.objects.get_or_create(report=report, user=request.user)
         if not created:
             return Response({"detail": "Signalement déjà confirmé."}, status=status.HTTP_200_OK)
+        # Le nombre de confirmations est un facteur du score de priorité (section 8).
+        compute_priority_score_task.delay(str(report.id))
         return Response({"detail": "Signalement confirmé."}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"], permission_classes=[IsOwnerOrReadOnly])

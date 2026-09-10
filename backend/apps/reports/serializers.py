@@ -4,6 +4,8 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from apps.geo.models import District, Location
+from apps.scoring.models import PriorityScore
+from apps.scoring.serializers import PriorityScoreSerializer
 
 from .models import Report, ReportImage
 
@@ -41,6 +43,7 @@ class ReportSerializer(serializers.ModelSerializer):
     location = LocationSerializer(read_only=True)
     images = ReportImageSerializer(many=True, read_only=True)
     confirmations_count = serializers.IntegerField(source="confirmations.count", read_only=True)
+    priority_score = serializers.SerializerMethodField()
 
     # Champs d'écriture pour la localisation (section 7) : le client envoie des
     # coordonnées simples, le serializer construit/actualise le Location associé
@@ -70,6 +73,7 @@ class ReportSerializer(serializers.ModelSerializer):
             "duplicate_of",
             "images",
             "confirmations_count",
+            "priority_score",
             "created_at",
             "updated_at",
             "resolved_at",
@@ -86,6 +90,18 @@ class ReportSerializer(serializers.ModelSerializer):
             "updated_at",
             "resolved_at",
         ]
+
+    def get_priority_score(self, obj):
+        """
+        SerializerMethodField plutôt que nested field direct : le score peut
+        ne pas encore exister juste après création (le calcul tourne en
+        tâche Celery asynchrone) — on retourne alors None plutôt que de
+        lever une exception.
+        """
+        try:
+            return PriorityScoreSerializer(obj.priority_score).data
+        except PriorityScore.DoesNotExist:
+            return None
 
     def validate(self, attrs):
         lat = attrs.get("latitude")

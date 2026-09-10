@@ -156,6 +156,16 @@ ANTHROPIC_API_KEY = config("ANTHROPIC_API_KEY", default="")
 # résultat reste une recommandation consultable par un admin (section 8).
 AI_DUPLICATE_AUTO_LINK_THRESHOLD = config("AI_DUPLICATE_AUTO_LINK_THRESHOLD", default=0.85, cast=float)
 
+# --- Scoring de priorité (section 8) ---
+# Seuils (0-100) définissant les 4 niveaux de PriorityScore.Level.
+# score < PRIORITY_LOW_MAX               -> low
+# PRIORITY_LOW_MAX <= score < MEDIUM_MAX -> medium
+# MEDIUM_MAX <= score < HIGH_MAX         -> high
+# score >= PRIORITY_HIGH_MAX             -> critical
+PRIORITY_LOW_MAX = config("PRIORITY_LOW_MAX", default=25.0, cast=float)
+PRIORITY_MEDIUM_MAX = config("PRIORITY_MEDIUM_MAX", default=50.0, cast=float)
+PRIORITY_HIGH_MAX = config("PRIORITY_HIGH_MAX", default=75.0, cast=float)
+
 # --- Paiement ---
 PAYMENT_PROVIDER = config("PAYMENT_PROVIDER", default="stripe")
 STRIPE_SECRET_KEY = config("STRIPE_SECRET_KEY", default="")

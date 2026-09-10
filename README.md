@@ -85,7 +85,12 @@ Pipeline (classification + résumé + détection de doublons) déclenché de fa�
 
 Documentation interactive complète : `http://localhost:8000/api/docs/`
 
+# DOCKER
+## Reconstruire/redémarrer le backend
+docker compose build backend
+docker compose up -d backend
 
+## DATABASE
 ## Voir les conteneurs Docker actifs
 docker compose ps
 

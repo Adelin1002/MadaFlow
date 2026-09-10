@@ -133,6 +133,21 @@ class TestReportPermissions:
         assert round(report.location.point.x, 4) == 47.5079
         assert report.location.approximate_address == "Antananarivo"
 
+    def test_owner_can_update_location_district(self, citizen_client, citizen):
+        from apps.common.tests.factories import DistrictFactory
+
+        report = ReportFactory(reporter=citizen)
+        new_district = DistrictFactory()
+        url = reverse("reports:report-detail", args=[report.id])
+        response = citizen_client.patch(
+            url,
+            {"latitude": -18.8792, "longitude": 47.5079, "district": str(new_district.id)},
+            format="json",
+        )
+        assert response.status_code == 200
+        report.refresh_from_db()
+        assert report.location.district_id == new_district.id
+
     def test_non_owner_cannot_update_report(self, other_citizen_client, citizen):
         report = ReportFactory(reporter=citizen)
         url = reverse("reports:report-detail", args=[report.id])

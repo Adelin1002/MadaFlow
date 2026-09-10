@@ -1,5 +1,7 @@
 import django_filters
 
+from apps.scoring.models import PriorityScore
+
 from .models import Report
 
 
@@ -8,9 +10,12 @@ class ReportFilter(django_filters.FilterSet):
     district = django_filters.UUIDFilter(field_name="location__district_id")
     status = django_filters.ChoiceFilter(choices=Report.Status.choices)
     severity = django_filters.ChoiceFilter(choices=Report.Severity.choices)
+    priority = django_filters.ChoiceFilter(
+        field_name="priority_score__level", choices=PriorityScore.Level.choices
+    )
     created_after = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="gte")
     created_before = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="lte")
 
     class Meta:
         model = Report
-        fields = ["category", "district", "status", "severity"]
+        fields = ["category", "district", "status", "severity", "priority"]

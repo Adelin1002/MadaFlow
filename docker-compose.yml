@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: madaflow
       POSTGRES_USER: madaflow
-      POSTGRES_PASSWORD: ade20&lin
+      POSTGRES_PASSWORD: "ade20&lin"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
