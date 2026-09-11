@@ -1,4 +1,4 @@
-.PHONY: up down build migrate makemigrations test lint format shell logs
+.PHONY: up down build migrate makemigrations test lint format shell logs frontend-test frontend-lint
 
 up:
 	docker compose up
@@ -30,3 +30,11 @@ shell:
 
 logs:
 	docker compose logs -f backend
+
+frontend-test:
+	docker compose run --rm frontend npm run test
+
+frontend-lint:
+	docker compose run --rm frontend npm run typecheck
+	docker compose run --rm frontend npm run lint
+	docker compose run --rm frontend npm run format:check

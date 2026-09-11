@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: madaflow
       POSTGRES_USER: madaflow
-      POSTGRES_PASSWORD: "ade20&lin"
+      POSTGRES_PASSWORD: madaflow_dev_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -69,6 +69,22 @@ services:
     depends_on:
       - backend
       - redis
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command: npm run dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.local
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

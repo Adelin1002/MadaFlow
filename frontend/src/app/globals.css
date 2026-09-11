@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* Dark mode piloté par une classe .dark sur <html> plutôt que par
+   prefers-color-scheme seul, pour permettre un bouton de bascule manuel
+   (section 17 : "mode sombre"). Voir src/components/theme-toggle.tsx. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Encre ardoise — pas un noir pur, plus proche d'un carnet de terrain */
+  --ink: #1c2321;
+  --ink-soft: #45514d;
+
+  /* Papier topographique — blanc cassé froid, pas la teinte crème générique */
+  --paper: #f7f5f0;
+  --paper-raised: #ffffff;
+  --sand: #e8dcc8;
+
+  /* Latérite oxydée — la terre rouge de "l'île rouge", jamais décorative */
+  --laterite: #8b3a1f;
+  --laterite-soft: #c65a37;
+
+  /* Vert rizière — validations, statuts résolus */
+  --paddy: #2f5d50;
+  --paddy-soft: #4a8272;
+
+  /* Grège pierre — bordures, séparateurs */
+  --stone: #c7c0ae;
+  --stone-soft: #ded8c9;
+}
+
+.dark {
+  --ink: #ece7de;
+  --ink-soft: #b8b1a2;
+  --paper: #161a18;
+  --paper-raised: #1f2422;
+  --sand: #2a2620;
+  --laterite: #d97a56;
+  --laterite-soft: #e39a7d;
+  --paddy: #6fae9b;
+  --paddy-soft: #8fc4b3;
+  --stone: #3d4640;
+  --stone-soft: #2c332e;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-sand: var(--sand);
+  --color-laterite: var(--laterite);
+  --color-laterite-soft: var(--laterite-soft);
+  --color-paddy: var(--paddy);
+  --color-paddy-soft: var(--paddy-soft);
+  --color-stone: var(--stone);
+  --color-stone-soft: var(--stone-soft);
+  --font-sans: var(--font-archivo);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* Respect du mouvement réduit (accessibilité, section 17) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
