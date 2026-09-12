@@ -19,6 +19,9 @@
   --laterite: #8b3a1f;
   --laterite-soft: #c65a37;
 
+  /* Ocre — palier intermédiaire de l'échelle de priorité (voir ReportMap) */
+  --ochre: #b8862e;
+
   /* Vert rizière — validations, statuts résolus */
   --paddy: #2f5d50;
   --paddy-soft: #4a8272;
@@ -36,6 +39,7 @@
   --sand: #2a2620;
   --laterite: #d97a56;
   --laterite-soft: #e39a7d;
+  --ochre: #d4a94f;
   --paddy: #6fae9b;
   --paddy-soft: #8fc4b3;
   --stone: #3d4640;
@@ -50,6 +54,7 @@
   --color-sand: var(--sand);
   --color-laterite: var(--laterite);
   --color-laterite-soft: var(--laterite-soft);
+  --color-ochre: var(--ochre);
   --color-paddy: var(--paddy);
   --color-paddy-soft: var(--paddy-soft);
   --color-stone: var(--stone);

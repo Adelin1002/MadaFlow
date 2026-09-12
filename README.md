@@ -43,7 +43,7 @@ cd frontend && npm run test
 
 Suite backend : 176 tests, 99% de couverture (auth, permissions par rôle, CRUD signalements, filtres, upload d'images, requêtes géospatiales PostGIS réelles, pipeline IA classification/résumé/doublons, moteur de scoring de priorité, agrégations analytics). Exécutée et validée contre une vraie base PostgreSQL/PostGIS, pas de mock de la couche géo (le seul mock du projet concerne le client SDK Anthropic — voir Statut ci-dessous).
 
-Suite frontend : 24 tests Vitest sur le client API (dont la logique de rafraîchissement JWT), plus intégration réelle testée contre un backend Django lancé en parallèle — voir `frontend/README.md`.
+Suite frontend : 40 tests Vitest (client API avec rafraîchissement JWT, stockage de tokens, `proxy.ts` de protection de routes, construction des requêtes filtrées), plus intégration réelle testée contre un backend Django lancé en parallèle — voir `frontend/README.md`.
 
 ## Structure
 

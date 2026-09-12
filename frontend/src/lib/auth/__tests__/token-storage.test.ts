@@ -4,6 +4,7 @@ import { tokenStorage } from "../token-storage";
 describe("tokenStorage", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    document.cookie = "madaflow_session=; path=/; max-age=0";
   });
 
   it("returns null when nothing is stored", () => {
@@ -29,5 +30,29 @@ describe("tokenStorage", () => {
     tokenStorage.clear();
     expect(tokenStorage.getAccessToken()).toBeNull();
     expect(tokenStorage.getRefreshToken()).toBeNull();
+  });
+
+  describe("session cookie (lu par proxy.ts, voir src/proxy.ts)", () => {
+    it("is absent before any login", () => {
+      expect(document.cookie).not.toContain("madaflow_session=1");
+    });
+
+    it("is set when tokens are stored", () => {
+      tokenStorage.setTokens("access-1", "refresh-1");
+      expect(document.cookie).toContain("madaflow_session=1");
+    });
+
+    it("is removed on clear", () => {
+      tokenStorage.setTokens("access-1", "refresh-1");
+      tokenStorage.clear();
+      expect(document.cookie).not.toContain("madaflow_session=1");
+    });
+
+    it("is not affected by setAccessToken alone", () => {
+      // setAccessToken sert au rafraîchissement silencieux (voir client.ts) —
+      // la session existe déjà, pas besoin de reposer le cookie.
+      tokenStorage.setAccessToken("access-only");
+      expect(document.cookie).not.toContain("madaflow_session=1");
+    });
   });
 });

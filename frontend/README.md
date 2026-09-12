@@ -28,28 +28,34 @@ npm run test               # vitest run
 
 ## Statut
 
-Étape 9/37 du cahier des charges (section 17-19) : fondations frontend. Scaffold, client API typé avec rafraîchissement JWT automatique, page d'accueil (copie exacte du cahier des charges), inscription/connexion connectées à l'API réelle.
+Étape 10/37 du cahier des charges (section 6.A) : carte interactive, première page protégée du frontend.
 
-**Validé en dur** (exécuté réellement, pas seulement écrit) :
+**Nouveau à cette étape** :
 
-- `npm run typecheck`, `npm run lint`, `npm run build` passent tous — le build inclut la compilation TypeScript et le prérendu statique réel des pages, pas une simple lecture de code
-- 24 tests Vitest, dont la logique de rafraîchissement JWT (un seul refresh en vol lors de requêtes concurrentes, anti-boucle infinie sur l'endpoint de refresh lui-même, nettoyage des tokens si le refresh échoue) — testée avec un vrai `fetch` mocké simulant les séquences 401 → refresh → retry
-- **Intégration réelle testée contre le backend Django** (que j'ai fait tourner en parallèle) : inscription, connexion, `/users/me/`, erreurs de validation. Deux vraies erreurs trouvées et corrigées grâce à ça :
-  1. Le backend traduit déjà ses messages d'erreur génériques en français (`LANGUAGE_CODE="fr-fr"`) — mon code les écrasait par un texte français codé en dur en supposant, à tort, un message anglais par défaut.
-  2. `RegisterSerializer` ne renvoie pas un objet `User` complet (pas de `id`/`is_verified`/`date_joined`) — mon typage `Promise<User>` sur `register()` était trompeur, corrigé en `RegisterResponse`.
+- **`src/proxy.ts`** (Next.js 16, anciennement `middleware.ts`) : redirige vers `/login?next=...` les visites de routes protégées sans session, et éloigne de `/login`/`/register` les personnes déjà connectées. Vérification **optimiste uniquement** (voir doc Next.js) : la vraie barrière de sécurité reste `IsAuthenticated` côté API Django.
+- **Tension architecturale résolue** : les tokens JWT vivent en `localStorage` (choix de l'Étape 9), inaccessible à `proxy.ts` qui tourne en edge runtime. Résolu avec un cookie non-httpOnly (`madaflow_session`), posé/retiré en même temps que les tokens (`src/lib/auth/token-storage.ts`) — ce cookie ne prouve rien côté sécurité, il évite seulement d'afficher le squelette d'une page protégée avant de rediriger.
+- **`/map`** : carte Leaflet (`react-leaflet`, chargée en `ssr: false` — Leaflet référence `window` à l'import, incompatible avec le pré-rendu serveur), marqueurs colorés par niveau de priorité via `divIcon` SVG référençant les variables CSS (s'adapte seul au mode sombre), popup avec confirmation fonctionnelle, filtres (catégorie/statut/gravité/priorité) réutilisant les query params déjà supportés par le backend (Étape 3).
 
-**Non vérifié dans cet environnement de génération** : rendu visuel et interactions réelles dans un navigateur. Ce sandbox n'a pas d'accès display/navigateur — aucun outil comme Playwright n'a pu être utilisé. La compilation, le typage, et le comportement logique du client API sont solidement vérifiés ; l'apparence effective et l'ergonomie (tab order, focus visible, contraste réel une fois rendu) restent à vérifier une fois lancé chez toi avec `npm run dev`.
+**Deux vrais problèmes trouvés et corrigés en écrivant/exécutant les tests** :
+
+1. Un `setState` synchrone en tête d'effet dans `/map` (vraie anti-pattern signalée par `react-hooks/set-state-in-effect`, pas un faux positif d'hydratation comme à l'Étape 9) — corrigé en déplaçant la mise à jour dans le callback asynchrone.
+2. `Cookie` est un en-tête interdit par la spec Fetch : impossible à injecter via `headers: { cookie: "..." }` dans un `NextRequest` de test, silencieusement ignoré. Diagnostiqué par une sonde dédiée, corrigé en utilisant `request.cookies.set()`.
+
+**Intégration réelle confirmée contre le backend** (compte de test + signalement créés en direct) : la forme de `GET /api/v1/reports/` correspond exactement aux types TypeScript (`location.latitude/longitude`, `category` en UUID brut, pagination `{count, next, previous, results}`). Confirmation notable : `priority_score` reste `null` juste après création dès qu'aucun worker Celery ne tourne pour consommer la tâche asynchrone (contrairement aux tests pytest, où `CELERY_TASK_ALWAYS_EAGER=True` simule l'exécution synchrone) — le frontend gérait déjà ce cas nul correctement (`?? "en cours de calcul"`), confirmé plutôt que supposé.
+
+**Non vérifié dans cet environnement de génération** : rendu visuel de la carte (positionnement des marqueurs, tuiles OpenStreetMap, popups) — toujours pas de navigateur disponible ici. La logique (récupération des données, construction des icônes, filtres, protection de route) est testée ; l'apparence reste à vérifier avec `npm run dev`.
 
 ## Choix techniques notables
 
-- **Next.js 16** : cette version diffère de ce qui circule le plus dans les ressources généralistes sur Next.js — `middleware.ts` est renommé `proxy.ts` (fonction `proxy` au lieu de `middleware`), `next lint` a été retiré au profit d'ESLint en CLI directe. Aucun `proxy.ts` n'existe encore à ce stade (pas de route protégée nécessitant une redirection serveur pour l'instant) ; il faudra y penser dès que `/map`, `/reports` ou `/dashboard` seront ajoutés.
+- **Next.js 16** : cette version diffère de ce qui circule le plus dans les ressources généralistes sur Next.js — `middleware.ts` est renommé `proxy.ts` (fonction `proxy` au lieu de `middleware`), `next lint` a été retiré au profit d'ESLint en CLI directe. `next typegen` régénère les types de routes ambient (`LayoutProps`, etc.) sans build complet — nécessaire après toute suppression de `.next/`.
 - **Polices auto-hébergées (`next/font/local`)** : `fonts.googleapis.com`/`fonts.gstatic.com` ne sont pas joignables dans cet environnement de génération — `next/font/google` fait donc échouer `next build`. Contourné en récupérant les fichiers **Archivo** (variable, licence OFL) directement depuis le mirror GitHub de Google Fonts (`raw.githubusercontent.com/google/fonts`), utilisés ensuite via `next/font/local`. Fonctionne aussi bien en dev qu'en prod, aucune dépendance réseau au runtime.
 - **Tokens JWT en `localStorage`** (`src/lib/auth/token-storage.ts`) : choix pragmatique pour ce MVP, avec un risque XSS documenté. Le module est volontairement isolé pour pouvoir être remplacé par un stockage en cookie httpOnly (via des Route Handlers Next.js faisant proxy vers le backend) sans toucher au reste du code, si le besoin de sécurité s'intensifie avant la mise en production réelle.
-- **Palette de couleurs** : ancrée dans le sujet plutôt que dans un kit SaaS générique — le rouge "latérite" (`--laterite`) référence la vraie couleur du sol malgache (Madagascar est surnommée "l'île rouge"), utilisé uniquement pour les alertes/priorités, jamais en décoration.
+- **Marqueurs de carte en `divIcon` SVG**, pas les icônes PNG par défaut de Leaflet (chemins relatifs notoirement cassés sous les bundlers) — permet aussi de référencer directement les variables CSS du thème plutôt que de dupliquer les couleurs en JS.
+- **Palette de couleurs** : ancrée dans le sujet plutôt que dans un kit SaaS générique — le rouge "latérite" (`--laterite`) référence la vraie couleur du sol malgache (Madagascar est surnommée "l'île rouge"), utilisé uniquement pour les alertes/priorités, jamais en décoration. L'échelle de priorité complète va de `--stone` (faible) à `--laterite` (critique) en passant par `--ochre` (moyenne).
 
 ## Prochaines étapes suggérées
 
-- `/map` — carte interactive (marqueurs, clustering, filtres) consommant `GET /api/v1/reports/`
-- `/reports` et `/reports/[id]` — liste et détail des signalements
-- `/create-report` — formulaire de signalement avec géolocalisation
-- `proxy.ts` pour protéger ces routes côté serveur (redirection si non connecté) plutôt que de s'appuyer uniquement sur les vérifications côté client déjà en place dans `AuthContext`
+- `/reports` et `/reports/[id]` — liste et détail des signalements (le détail pourrait aussi exposer le calcul complet du score de priorité, déjà transparent côté API)
+- `/create-report` — formulaire de signalement avec géolocalisation (navigateur) ou sélection sur la carte
+- `/profile` — consultation/édition de `GET/PATCH /api/v1/users/me/`, déjà implémenté côté client (`updateMe` dans `src/lib/api/auth.ts`) mais sans page
+- Un vrai worker Celery documenté dans le flux de développement local (`celery -A config worker`) — sans lui, `priority_score` et les analyses IA restent indéfiniment `null`/vides, comme confirmé à cette étape

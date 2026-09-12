@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormField } from "@/components/form-field";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getFieldErrors, getGeneralError } from "@/lib/api/error-messages";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +25,10 @@ export default function LoginPage() {
 
     try {
       await login(username, password);
-      router.push("/map");
+      // Redirige vers la page initialement demandée si proxy.ts a renvoyé
+      // ici faute de session (voir src/proxy.ts), sinon vers la carte.
+      const next = searchParams.get("next");
+      router.push(next && next.startsWith("/") ? next : "/map");
     } catch (error) {
       setFieldErrors(getFieldErrors(error));
       setGeneralError(getGeneralError(error));
@@ -83,5 +87,13 @@ export default function LoginPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
