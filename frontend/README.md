@@ -28,23 +28,19 @@ npm run test               # vitest run
 
 ## Statut
 
-Étape 11/37 du cahier des charges (section 6, 18) : liste et détail des signalements.
+Étape 12/37 du cahier des charges (section 7) : création de signalement, dernière pièce du cycle citoyen complet (créer _et_ consulter, plus seulement consulter).
 
 **Nouveau à cette étape** :
 
-- **`/reports`** : liste paginée, réutilise le `FiltersPanel` déjà construit pour `/map` (catégorie/statut/gravité/priorité) plutôt que d'en dupliquer un. Pagination par compteur local (`filters.page`) plutôt que par extraction du paramètre `page` depuis les URLs `next`/`previous` de DRF — voir plus bas pourquoi.
-- **`/reports/[id]`** : page de détail — description complète, photos, badges de gravité/statut/priorité, et surtout la **première interface pour l'explicabilité du score de priorité** construite à l'Étape 7 (`PriorityExplanation`) : chaque facteur (gravité, confirmations, doublons liés, ancienneté, récurrence), son poids et sa contribution, plus la mention explicite des facteurs non implémentés (`proximite_zone_importante`) plutôt que de les cacher.
-- **`ConfirmButton`** extrait en composant partagé entre le popup de la carte et la page de détail (au lieu d'une logique dupliquée).
-- **`PageProps<'/reports/[id]'>`** : helper de typage ambient généré par `next typegen`, à régénérer après la création de chaque nouvelle route dynamique (pas seulement après suppression de `.next/`, comme découvert à l'Étape 10).
+- **`/create-report`** : catégorie, titre, description, gravité, localisation, photos (facultatives). Le flux respecte l'API telle qu'elle existe réellement : `POST /reports/` (JSON) crée le signalement, puis chaque photo est envoyée séparément via `POST /reports/{id}/images/` (multipart) — l'API n'accepte pas les photos à la création elle-même (voir `apps.reports.views.ReportViewSet.images` côté backend, Étape 3). Un échec d'upload de photo n'empêche pas d'accéder au signalement déjà créé avec succès.
+- **`LocationPicker`** : sélection de la localisation par clic sur une carte Leaflet embarquée ou par géolocalisation navigateur (`navigator.geolocation`), avec recentrage automatique de la carte quand la position change par un autre moyen que le clic. Pas de géocodage inverse (aucun service autorisé dans cet environnement, et hors périmètre de cette étape) — l'adresse approximative reste un champ texte libre, facultatif.
+- Lien "Signaler" ajouté à la navbar, en évidence au même titre que "Créer un compte" pour les visiteurs non connectés.
 
-**Un vrai bug évité avant même d'écrire du code** : DRF omet `page=1` du lien `previous` de la pagination (comportement standard de `PageNumberPagination` — la page 1 n'a pas besoin d'être explicite). Une implémentation naïve extrayant le numéro de page depuis l'URL `previous` aurait rendu le bouton "Précédent" silencieusement inopérant en revenant à la première page. Repéré en analysant le comportement DRF avant d'écrire le test, pas après un échec — remplacé par un compteur de page suivi côté client.
+**Un vrai artefact de test découvert, pas un bug produit** : en testant l'upload de photo via `curl`, le GIF de test construit avec `printf` et des séquences d'échappement shell (`\xff`, `\x04`...) s'est corrompu silencieusement (`file` rapportait des dimensions absurdes de 30812×12592 pour un GIF censé faire 1×1 pixel). Reconstruit avec Python pour un contrôle exact des octets, l'upload a fonctionné du premier coup. Bon rappel que l'outil de test peut être la source de l'échec, pas seulement le code testé — la même discipline de vérification s'applique à mes propres scripts de test.
 
-**Deux hypothèses vérifiées, pas juste supposées** :
+**Flux complet confirmé de bout en bout contre le vrai backend** (création JSON → upload multipart → relecture) : la photo apparaît dans `images[]` avec une URL absolue (`http://localhost:8000/media/...`), exactement la forme attendue par mon type `ReportImage`. Aucune correction de code nécessaire — une confirmation propre plutôt qu'une découverte de bug, comme la vérification de `PriorityExplanation` à l'Étape 11.
 
-1. Les chaînes produites par `Intl.RelativeTimeFormat` en français ne sont pas devinables sans exécution réelle (`"maintenant"` pour 0 seconde avec `numeric: "auto"`, pas `"il y a 0 seconde"` comme je l'avais d'abord écrit) — corrigé après avoir fait tourner le test et lu la vraie sortie ICU.
-2. **Confirmation complète et rassurante** : en créant un signalement avec un vrai worker Celery actif (`celery -A config worker`) et en récupérant son détail, le payload `priority_score` réel correspond exactement à ce que `PriorityExplanation` attendait — construit à l'Étape 11 à partir de la lecture du code backend de l'Étape 7, jamais testé en conditions réelles jusqu'ici. Aucune correction nécessaire.
-
-**Non vérifié dans cet environnement de génération** : rendu visuel (positionnement des badges, barres de contribution, galerie d'images) — toujours pas de navigateur disponible ici.
+**Non vérifié dans cet environnement de génération** : rendu visuel du formulaire et de la carte de sélection, ergonomie tactile de la sélection par clic sur mobile — toujours pas de navigateur disponible ici.
 
 ## Choix techniques notables
 
@@ -59,4 +55,5 @@ npm run test               # vitest run
 - `/create-report` — formulaire de signalement avec géolocalisation (navigateur) ou sélection sur la carte
 - `/profile` — consultation/édition de `GET/PATCH /api/v1/users/me/`, déjà implémenté côté client (`updateMe` dans `src/lib/api/auth.ts`) mais sans page
 - Un vrai worker Celery documenté dans le flux de développement local (`celery -A config worker`) — sans lui, `priority_score` et les analyses IA restent indéfiniment `null`/vides, confirmé aux Étapes 10 et 11
-- Pagination de `/reports` : actuellement un compteur de page suivi côté client (voir Statut ci-dessus) — passer à des liens numérotés ("1 2 3...") demanderait de connaître le nombre total de pages, calculable depuis `count` déjà renvoyé par l'API
+- Pagination de `/reports` : actuellement un compteur de page suivi côté client (voir Statut de l'Étape 11) — passer à des liens numérotés ("1 2 3...") demanderait de connaître le nombre total de pages, calculable depuis `count` déjà renvoyé par l'API
+- Le cycle citoyen (accueil → inscription → carte → liste/détail → confirmation → création) est maintenant complet de bout en bout ; la suite logique s'oriente vers les autres rôles (`municipal_admin`, `business`) ou vers le tableau de bord (section 12, déjà exposé côté API depuis l'Étape 8 mais sans interface)

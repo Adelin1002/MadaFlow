@@ -33,3 +33,26 @@ export function getReport(id: string): Promise<Report> {
 export function confirmReport(id: string): Promise<{ detail: string }> {
   return apiFetch<{ detail: string }>(`/reports/${id}/confirm/`, { method: "POST" });
 }
+
+export interface CreateReportPayload {
+  category: string;
+  title: string;
+  description: string;
+  severity: ReportSeverity;
+  latitude: number;
+  longitude: number;
+  approximate_address?: string;
+}
+
+export function createReport(payload: CreateReportPayload): Promise<Report> {
+  return apiFetch<Report>("/reports/", { method: "POST", body: payload });
+}
+
+export function uploadReportImage(reportId: string, file: File): Promise<{ id: string }> {
+  const formData = new FormData();
+  formData.append("image", file);
+  return apiFetch<{ id: string }>(`/reports/${reportId}/images/`, {
+    method: "POST",
+    body: formData,
+  });
+}
