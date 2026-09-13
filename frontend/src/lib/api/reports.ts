@@ -8,12 +8,15 @@ export interface ReportListFilters {
   severity?: ReportSeverity;
   priority?: "low" | "medium" | "high" | "critical";
   search?: string;
+  ordering?: string;
+  /** Numéro de page — DRF utilise `?page=N` (PageNumberPagination, voir backend). */
+  page?: number;
 }
 
 function buildQueryString(filters: ReportListFilters): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
-    if (value) params.set(key, value);
+    if (value) params.set(key, String(value));
   }
   const query = params.toString();
   return query ? `?${query}` : "";

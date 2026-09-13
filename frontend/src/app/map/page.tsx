@@ -4,9 +4,9 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { FiltersPanel } from "@/components/map/filters-panel";
 import { MapLegend } from "@/components/map/map-legend";
-import { listCategories } from "@/lib/api/categories";
+import { useCategories } from "@/lib/hooks/use-categories";
 import { listReports, type ReportListFilters } from "@/lib/api/reports";
-import type { Category, Report } from "@/lib/api/types";
+import type { Report } from "@/lib/api/types";
 
 // Leaflet référence `window` dès l'import du module — impossible à
 // pré-rendre côté serveur, d'où ssr: false (voir README, section Next.js 16).
@@ -24,17 +24,9 @@ const ReportMap = dynamic(
 
 export default function MapPage() {
   const [reports, setReports] = useState<Report[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const categories = useCategories();
   const [filters, setFilters] = useState<ReportListFilters>({});
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    listCategories()
-      .then((response) => setCategories(response.results))
-      .catch(() => {
-        // Non bloquant : la carte reste utilisable sans filtre par catégorie.
-      });
-  }, []);
 
   useEffect(() => {
     listReports(filters)

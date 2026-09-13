@@ -29,4 +29,16 @@ describe("listReports", () => {
     await listReports({ category: undefined, status: "resolved" });
     expect(apiFetch).toHaveBeenCalledWith("/reports/?status=resolved");
   });
+
+  it("includes the page number as a string query param", async () => {
+    await listReports({ page: 2 });
+    expect(apiFetch).toHaveBeenCalledWith("/reports/?page=2");
+  });
+
+  it("omits page=1 the same way any other falsy-like default would not apply here", async () => {
+    // page est un number, donc seule la valeur 0 serait "falsy" — non pertinente
+    // pour une pagination 1-indexée côté DRF. page=1 doit bien être inclus si fourni explicitement.
+    await listReports({ page: 1 });
+    expect(apiFetch).toHaveBeenCalledWith("/reports/?page=1");
+  });
 });

@@ -28,22 +28,23 @@ npm run test               # vitest run
 
 ## Statut
 
-Étape 10/37 du cahier des charges (section 6.A) : carte interactive, première page protégée du frontend.
+Étape 11/37 du cahier des charges (section 6, 18) : liste et détail des signalements.
 
 **Nouveau à cette étape** :
 
-- **`src/proxy.ts`** (Next.js 16, anciennement `middleware.ts`) : redirige vers `/login?next=...` les visites de routes protégées sans session, et éloigne de `/login`/`/register` les personnes déjà connectées. Vérification **optimiste uniquement** (voir doc Next.js) : la vraie barrière de sécurité reste `IsAuthenticated` côté API Django.
-- **Tension architecturale résolue** : les tokens JWT vivent en `localStorage` (choix de l'Étape 9), inaccessible à `proxy.ts` qui tourne en edge runtime. Résolu avec un cookie non-httpOnly (`madaflow_session`), posé/retiré en même temps que les tokens (`src/lib/auth/token-storage.ts`) — ce cookie ne prouve rien côté sécurité, il évite seulement d'afficher le squelette d'une page protégée avant de rediriger.
-- **`/map`** : carte Leaflet (`react-leaflet`, chargée en `ssr: false` — Leaflet référence `window` à l'import, incompatible avec le pré-rendu serveur), marqueurs colorés par niveau de priorité via `divIcon` SVG référençant les variables CSS (s'adapte seul au mode sombre), popup avec confirmation fonctionnelle, filtres (catégorie/statut/gravité/priorité) réutilisant les query params déjà supportés par le backend (Étape 3).
+- **`/reports`** : liste paginée, réutilise le `FiltersPanel` déjà construit pour `/map` (catégorie/statut/gravité/priorité) plutôt que d'en dupliquer un. Pagination par compteur local (`filters.page`) plutôt que par extraction du paramètre `page` depuis les URLs `next`/`previous` de DRF — voir plus bas pourquoi.
+- **`/reports/[id]`** : page de détail — description complète, photos, badges de gravité/statut/priorité, et surtout la **première interface pour l'explicabilité du score de priorité** construite à l'Étape 7 (`PriorityExplanation`) : chaque facteur (gravité, confirmations, doublons liés, ancienneté, récurrence), son poids et sa contribution, plus la mention explicite des facteurs non implémentés (`proximite_zone_importante`) plutôt que de les cacher.
+- **`ConfirmButton`** extrait en composant partagé entre le popup de la carte et la page de détail (au lieu d'une logique dupliquée).
+- **`PageProps<'/reports/[id]'>`** : helper de typage ambient généré par `next typegen`, à régénérer après la création de chaque nouvelle route dynamique (pas seulement après suppression de `.next/`, comme découvert à l'Étape 10).
 
-**Deux vrais problèmes trouvés et corrigés en écrivant/exécutant les tests** :
+**Un vrai bug évité avant même d'écrire du code** : DRF omet `page=1` du lien `previous` de la pagination (comportement standard de `PageNumberPagination` — la page 1 n'a pas besoin d'être explicite). Une implémentation naïve extrayant le numéro de page depuis l'URL `previous` aurait rendu le bouton "Précédent" silencieusement inopérant en revenant à la première page. Repéré en analysant le comportement DRF avant d'écrire le test, pas après un échec — remplacé par un compteur de page suivi côté client.
 
-1. Un `setState` synchrone en tête d'effet dans `/map` (vraie anti-pattern signalée par `react-hooks/set-state-in-effect`, pas un faux positif d'hydratation comme à l'Étape 9) — corrigé en déplaçant la mise à jour dans le callback asynchrone.
-2. `Cookie` est un en-tête interdit par la spec Fetch : impossible à injecter via `headers: { cookie: "..." }` dans un `NextRequest` de test, silencieusement ignoré. Diagnostiqué par une sonde dédiée, corrigé en utilisant `request.cookies.set()`.
+**Deux hypothèses vérifiées, pas juste supposées** :
 
-**Intégration réelle confirmée contre le backend** (compte de test + signalement créés en direct) : la forme de `GET /api/v1/reports/` correspond exactement aux types TypeScript (`location.latitude/longitude`, `category` en UUID brut, pagination `{count, next, previous, results}`). Confirmation notable : `priority_score` reste `null` juste après création dès qu'aucun worker Celery ne tourne pour consommer la tâche asynchrone (contrairement aux tests pytest, où `CELERY_TASK_ALWAYS_EAGER=True` simule l'exécution synchrone) — le frontend gérait déjà ce cas nul correctement (`?? "en cours de calcul"`), confirmé plutôt que supposé.
+1. Les chaînes produites par `Intl.RelativeTimeFormat` en français ne sont pas devinables sans exécution réelle (`"maintenant"` pour 0 seconde avec `numeric: "auto"`, pas `"il y a 0 seconde"` comme je l'avais d'abord écrit) — corrigé après avoir fait tourner le test et lu la vraie sortie ICU.
+2. **Confirmation complète et rassurante** : en créant un signalement avec un vrai worker Celery actif (`celery -A config worker`) et en récupérant son détail, le payload `priority_score` réel correspond exactement à ce que `PriorityExplanation` attendait — construit à l'Étape 11 à partir de la lecture du code backend de l'Étape 7, jamais testé en conditions réelles jusqu'ici. Aucune correction nécessaire.
 
-**Non vérifié dans cet environnement de génération** : rendu visuel de la carte (positionnement des marqueurs, tuiles OpenStreetMap, popups) — toujours pas de navigateur disponible ici. La logique (récupération des données, construction des icônes, filtres, protection de route) est testée ; l'apparence reste à vérifier avec `npm run dev`.
+**Non vérifié dans cet environnement de génération** : rendu visuel (positionnement des badges, barres de contribution, galerie d'images) — toujours pas de navigateur disponible ici.
 
 ## Choix techniques notables
 
@@ -55,7 +56,7 @@ npm run test               # vitest run
 
 ## Prochaines étapes suggérées
 
-- `/reports` et `/reports/[id]` — liste et détail des signalements (le détail pourrait aussi exposer le calcul complet du score de priorité, déjà transparent côté API)
 - `/create-report` — formulaire de signalement avec géolocalisation (navigateur) ou sélection sur la carte
 - `/profile` — consultation/édition de `GET/PATCH /api/v1/users/me/`, déjà implémenté côté client (`updateMe` dans `src/lib/api/auth.ts`) mais sans page
-- Un vrai worker Celery documenté dans le flux de développement local (`celery -A config worker`) — sans lui, `priority_score` et les analyses IA restent indéfiniment `null`/vides, comme confirmé à cette étape
+- Un vrai worker Celery documenté dans le flux de développement local (`celery -A config worker`) — sans lui, `priority_score` et les analyses IA restent indéfiniment `null`/vides, confirmé aux Étapes 10 et 11
+- Pagination de `/reports` : actuellement un compteur de page suivi côté client (voir Statut ci-dessus) — passer à des liens numérotés ("1 2 3...") demanderait de connaître le nombre total de pages, calculable depuis `count` déjà renvoyé par l'API

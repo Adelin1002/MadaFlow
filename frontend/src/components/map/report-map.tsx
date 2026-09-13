@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import Link from "next/link";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { confirmReport } from "@/lib/api/reports";
-import { ApiError } from "@/lib/api/client";
+import { ConfirmButton } from "@/components/reports/confirm-button";
 import type { Report } from "@/lib/api/types";
 import { createReportIcon } from "./leaflet-icons";
 
@@ -28,25 +28,6 @@ function FitToReports({ reports }: { reports: Report[] }) {
 }
 
 function ReportPopupContent({ report }: { report: Report }) {
-  const [confirmState, setConfirmState] = useState<"idle" | "loading" | "done" | "error">("idle");
-  const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
-
-  async function handleConfirm() {
-    setConfirmState("loading");
-    try {
-      const result = await confirmReport(report.id);
-      setConfirmMessage(result.detail);
-      setConfirmState("done");
-    } catch (error) {
-      setConfirmMessage(
-        error instanceof ApiError && error.body.detail
-          ? error.body.detail
-          : "Impossible de confirmer ce signalement.",
-      );
-      setConfirmState("error");
-    }
-  }
-
   return (
     <div className="min-w-48 space-y-2 text-sm">
       <p className="font-medium">{report.title}</p>
@@ -66,21 +47,14 @@ function ReportPopupContent({ report }: { report: Report }) {
         </div>
       </dl>
 
-      {confirmState !== "done" && (
-        <button
-          type="button"
-          onClick={handleConfirm}
-          disabled={confirmState === "loading"}
-          className="w-full border border-ink px-3 py-1.5 text-xs font-medium transition-colors hover:border-laterite hover:text-laterite disabled:opacity-50"
-        >
-          {confirmState === "loading" ? "Confirmation…" : "Je confirme ce problème"}
-        </button>
-      )}
-      {confirmMessage && (
-        <p className={confirmState === "error" ? "text-laterite" : "text-paddy"}>
-          {confirmMessage}
-        </p>
-      )}
+      <ConfirmButton reportId={report.id} />
+
+      <Link
+        href={`/reports/${report.id}`}
+        className="block text-xs text-laterite underline underline-offset-2"
+      >
+        Voir le détail
+      </Link>
     </div>
   );
 }
