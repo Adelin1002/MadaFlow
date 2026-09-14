@@ -28,9 +28,11 @@ export function fetchMe(): Promise<User> {
   return apiFetch<User>("/users/me/");
 }
 
-export function updateMe(
-  payload: Partial<Pick<User, "email" | "first_name" | "last_name" | "phone_number">>,
-): Promise<User> {
+export type UpdateProfilePayload = Partial<
+  Pick<User, "email" | "first_name" | "last_name" | "phone_number">
+>;
+
+export function updateMe(payload: UpdateProfilePayload): Promise<User> {
   return apiFetch<User>("/users/me/", {
     method: "PATCH",
     body: payload,

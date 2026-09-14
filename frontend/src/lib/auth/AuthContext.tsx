@@ -5,7 +5,9 @@ import {
   fetchMe,
   login as apiLogin,
   register as apiRegister,
+  updateMe,
   type RegisterPayload,
+  type UpdateProfilePayload,
 } from "@/lib/api/auth";
 import type { User } from "@/lib/api/types";
 import { tokenStorage } from "./token-storage";
@@ -17,6 +19,9 @@ interface AuthContextValue {
   login: (username: string, password: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
+  /** Centralisé ici plutôt que dans /profile : tout ce qui lit `user` via
+   * useAuth() (la navbar, par exemple) reste synchronisé après une édition. */
+  updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -66,8 +71,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const updateProfile = useCallback(async (payload: UpdateProfilePayload) => {
+    const updated = await updateMe(payload);
+    setUser(updated);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
