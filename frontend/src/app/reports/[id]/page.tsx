@@ -22,9 +22,7 @@ type ReportDetailPageProps = {
   }>;
 };
 
-export default function ReportDetailPage({
-  params,
-}: ReportDetailPageProps) {
+export default function ReportDetailPage({ params }: ReportDetailPageProps) {
   const { id } = use(params);
   const { user } = useAuth();
   const categories = useCategories();
