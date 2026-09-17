@@ -10,7 +10,11 @@ export const metadata: Metadata = {
     "MadaFlow transforme les données géographiques en informations exploitables pour les citoyens, les entreprises et les collectivités de Madagascar.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+type RootLayoutProps = {
+  children: React.ReactNode;
+};
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="fr" className={`${archivo.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="flex min-h-full flex-col">

@@ -16,8 +16,16 @@ import type { Report } from "@/lib/api/types";
 
 const ADMIN_TYPES = new Set(["municipal_admin", "platform_admin"]);
 
-export default function ReportDetailPage(props: PageProps<"/reports/[id]">) {
-  const { id } = use(props.params);
+type ReportDetailPageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export default function ReportDetailPage({
+  params,
+}: ReportDetailPageProps) {
+  const { id } = use(params);
   const { user } = useAuth();
   const categories = useCategories();
   const [report, setReport] = useState<Report | null>(null);
