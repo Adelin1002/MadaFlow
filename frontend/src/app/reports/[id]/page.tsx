@@ -1,18 +1,24 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { AiAnalysesPanel } from "@/components/reports/ai-analyses-panel";
 import { ConfirmButton } from "@/components/reports/confirm-button";
 import { PriorityExplanation } from "@/components/reports/priority-explanation";
 import { StatusBadge } from "@/components/reports/status-badge";
+import { StatusUpdateControl } from "@/components/reports/status-update-control";
 import { UrgencyBadge } from "@/components/reports/urgency-badge";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { useCategories } from "@/lib/hooks/use-categories";
 import { formatFullDate, formatRelativeDate } from "@/lib/format";
 import { ApiError } from "@/lib/api/client";
-import { getReport } from "@/lib/api/reports";
+import { applyStatusPatch, getReport } from "@/lib/api/reports";
 import type { Report } from "@/lib/api/types";
+
+const ADMIN_TYPES = new Set(["municipal_admin", "platform_admin"]);
 
 export default function ReportDetailPage(props: PageProps<"/reports/[id]">) {
   const { id } = use(props.params);
+  const { user } = useAuth();
   const categories = useCategories();
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +53,7 @@ export default function ReportDetailPage(props: PageProps<"/reports/[id]">) {
   }
 
   const categoryName = categories.find((category) => category.id === report.category)?.name;
+  const isAdmin = user ? ADMIN_TYPES.has(user.user_type) : false;
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
@@ -110,6 +117,18 @@ export default function ReportDetailPage(props: PageProps<"/reports/[id]">) {
       {report.priority_score && (
         <div className="mt-10 border-t border-stone pt-6">
           <PriorityExplanation priorityScore={report.priority_score} />
+        </div>
+      )}
+
+      {isAdmin && (
+        <div className="mt-10 space-y-6 border-t border-stone pt-6">
+          <StatusUpdateControl
+            report={report}
+            onUpdated={(patch) =>
+              setReport((current) => (current ? applyStatusPatch(current, patch) : current))
+            }
+          />
+          <AiAnalysesPanel reportId={report.id} />
         </div>
       )}
     </div>

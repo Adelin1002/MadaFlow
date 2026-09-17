@@ -5,7 +5,7 @@ const COLORS: Record<"low" | "medium" | "high" | "critical", string> = {
   critical: "var(--laterite)",
 };
 
-const LABELS: Record<"low" | "medium" | "high" | "critical", string> = {
+export const URGENCY_LABELS: Record<"low" | "medium" | "high" | "critical", string> = {
   low: "Faible",
   medium: "Moyenne",
   high: "Élevée",
@@ -33,7 +33,7 @@ export function UrgencyBadge({
         aria-hidden="true"
       />
       {prefix ? `${prefix} : ` : ""}
-      {LABELS[level]}
+      {URGENCY_LABELS[level]}
     </span>
   );
 }

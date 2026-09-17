@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { PaginatedResponse, Report, ReportSeverity, ReportStatus } from "./types";
+import type { AIAnalysis, PaginatedResponse, Report, ReportSeverity, ReportStatus } from "./types";
 
 export interface ReportListFilters {
   category?: string;
@@ -55,4 +55,45 @@ export function uploadReportImage(reportId: string, file: File): Promise<{ id: s
     method: "POST",
     body: formData,
   });
+}
+
+/**
+ * Réservé municipal_admin/platform_admin côté backend (IsMunicipalOrPlatformAdmin,
+ * Étape 3) — un citoyen qui l'appelle reçoit 403. Le composant appelant
+ * n'a donc pas besoin de revérifier le rôle avant d'appeler, seulement
+ * avant d'afficher le contrôle lui-même.
+ *
+ * ATTENTION : la réponse n'est PAS un Report complet — ReportStatusSerializer
+ * (backend) ne renvoie que {status, resolved_at} (confirmé contre le vrai
+ * serveur). Ne jamais l'utiliser pour remplacer un Report entier en state.
+ */
+export interface UpdateStatusResponse {
+  status: ReportStatus;
+  resolved_at: string | null;
+}
+
+export function updateReportStatus(
+  id: string,
+  status: ReportStatus,
+): Promise<UpdateStatusResponse> {
+  return apiFetch<UpdateStatusResponse>(`/reports/${id}/status_update/`, {
+    method: "PATCH",
+    body: { status },
+  });
+}
+
+/**
+ * Fusionne le patch partiel renvoyé par updateReportStatus dans un Report
+ * complet déjà en mémoire — jamais l'inverse (remplacer le Report par le
+ * patch), qui perdrait title/description/images/etc. Extrait en fonction
+ * testable après qu'une version inline de cette fusion s'est révélée
+ * nécessaire suite à une hypothèse de forme de réponse erronée.
+ */
+export function applyStatusPatch(report: Report, patch: UpdateStatusResponse): Report {
+  return { ...report, ...patch };
+}
+
+/** Réservé municipal_admin/platform_admin côté backend (Étape 6). */
+export function getReportAiAnalyses(id: string): Promise<AIAnalysis[]> {
+  return apiFetch<AIAnalysis[]>(`/reports/${id}/ai_analyses/`);
 }

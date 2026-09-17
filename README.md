@@ -43,7 +43,7 @@ cd frontend && npm run test
 
 Suite backend : 176 tests, 99% de couverture (auth, permissions par rôle, CRUD signalements, filtres, upload d'images, requêtes géospatiales PostGIS réelles, pipeline IA classification/résumé/doublons, moteur de scoring de priorité, agrégations analytics). Exécutée et validée contre une vraie base PostgreSQL/PostGIS, pas de mock de la couche géo (le seul mock du projet concerne le client SDK Anthropic — voir Statut ci-dessous).
 
-Suite frontend : 53 tests Vitest (client API avec rafraîchissement JWT, stockage de tokens, `proxy.ts` de protection de routes, création de signalement et upload de photo, édition de profil, construction des requêtes filtrées, formatage de dates), plus intégration réelle testée contre un backend Django lancé en parallèle avec un vrai worker Celery actif — voir `frontend/README.md`.
+Suite frontend : 72 tests Vitest (client API avec rafraîchissement JWT, stockage de tokens, `proxy.ts` de protection de routes, création de signalement et upload de photo, édition de profil, endpoints analytics du tableau de bord, actions admin sur les signalements — changement de statut et diagnostic IA, construction des requêtes filtrées, formatage de dates), plus intégration réelle testée contre un backend Django lancé en parallèle avec un vrai worker Celery actif et un vrai utilisateur admin — voir `frontend/README.md`.
 
 ## Structure
 

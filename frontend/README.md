@@ -28,21 +28,24 @@ npm run test               # vitest run
 
 ## Statut
 
-Étape 13/37 du cahier des charges (section 18) : page profil — dernière brique manquante du cycle citoyen, et un vrai lien mort refermé au passage.
-
-**Constat avant de commencer** : le lien "Profil" existait dans la navbar depuis l'Étape 9 et pointait vers une page qui n'a jamais été construite — un lien mort resté ouvert pendant quatre étapes. Corrigé en priorité plutôt que d'enchaîner sur une nouvelle direction (tableau de bord admin).
+Étape 15/37 du cahier des charges (section 5, 8) : actions admin sur la page de détail d'un signalement — changement de statut et diagnostic IA, deux endpoints construits et testés côté backend depuis les Étapes 3 et 6, jamais exposés jusqu'ici.
 
 **Nouveau à cette étape** :
 
-- **`/profile`** : consultation (nom d'utilisateur, type de compte, email vérifié, date d'inscription — tous en lecture seule) et édition (email, prénom, nom, téléphone) via `PATCH /api/v1/users/me/`.
-- **`AuthContext.updateProfile`** : centralise l'appel API et la mise à jour de l'utilisateur dans le contexte global, plutôt qu'un état local à la page — tout ce qui lit `user` via `useAuth()` (la navbar, par exemple) reste synchronisé après une édition.
-- **Décision de scope délibérée, pas une limite technique** : le backend autorise techniquement la modification de `username` via `PATCH /users/me/` (confirmé contre le vrai serveur), mais l'interface ne l'expose pas — changer son identifiant remettrait en cause son affichage ailleurs dans l'app (auteur des signalements, etc.) sans bénéfice clair pour ce MVP.
+- **`StatusUpdateControl`** : changement de statut (`PATCH /reports/{id}/status_update/`), affiché uniquement pour `municipal_admin`/`platform_admin` sur `/reports/[id]`.
+- **`AiAnalysesPanel`** : diagnostic IA brut (classification suggérée, résumé, doublons détectés), première interface pour `GET /reports/{id}/ai_analyses/` construit à l'Étape 6 — jusqu'ici seulement accessible via `curl`.
 
-**Un vrai problème de conception corrigé avant la mise en production du code, pas après un bug** : la première version de la page synchronisait l'état local du formulaire depuis `user` (le contexte) via un `useEffect` — signalé à raison par `react-hooks/set-state-in-effect` comme l'anti-pattern canonique ("dériver un état depuis une prop via un effet"). Corrigé en extrayant un composant `ProfileForm` qui ne monte qu'une fois `user` garanti non nul, initialisant son état directement depuis les props — plus besoin d'effet du tout. Contrairement aux faux positifs d'hydratation des étapes précédentes, celui-ci était fondé.
+**Un vrai bug trouvé par l'intégration réelle, corrigé avant tout usage** : `updateReportStatus` était typé `Promise<Report>`, mais `ReportStatusSerializer` (backend) ne renvoie que `{status, resolved_at}` — confirmé contre le vrai serveur. Le code appelant (`onUpdated(updated)`) aurait remplacé l'état complet du signalement par cet objet partiel au premier clic, faisant disparaître le titre, la description, les images de l'écran. Corrigé en :
 
-**Intégration réelle confirmée contre le backend** : le payload exact du formulaire fonctionne (200), la tentative de modifier `user_type` est bien silencieusement ignorée (`read_only_fields` tient), et la modification de `username` fonctionne comme prévu par le backend — confirmant que son absence de l'UI est un choix, pas un oubli.
+1. Renommant le type de retour en `UpdateStatusResponse` (le vrai contrat)
+2. Extrayant une fonction `applyStatusPatch(report, patch)` qui **fusionne** le patch dans le signalement existant plutôt que de le remplacer
+3. Ajoutant un test de régression qui verrouille ce comportement (`applyStatusPatch` ne doit jamais perdre de champs, ne doit jamais muter l'original)
 
-**Non vérifié dans cet environnement de génération** : rendu visuel du formulaire — toujours pas de navigateur disponible ici.
+C'est le premier vrai bug de logique d'état trouvé dans ce projet frontend (les précédents étaient soit des styles de code signalés par ESLint, soit des hypothèses de format déjà correctes) — et il n'a été découvert qu'en testant contre le vrai serveur avec un vrai rôle admin, pas en lisant le code.
+
+**Le reste de l'intégration confirmé sans correction** : citoyen 403 sur les deux endpoints (la vraie barrière de sécurité, cohérente avec le choix de ne pas afficher les contrôles côté UI pour ce rôle), et la forme de `ai_analyses` (classification, résumé, détection de doublons) correspond exactement à `renderResult()`.
+
+**Non vérifié dans cet environnement de génération** : rendu visuel — toujours pas de navigateur disponible ici.
 
 ## Choix techniques notables
 
@@ -56,4 +59,6 @@ npm run test               # vitest run
 
 - Un vrai worker Celery documenté dans le flux de développement local (`celery -A config worker`) — sans lui, `priority_score` et les analyses IA restent indéfiniment `null`/vides, confirmé aux Étapes 10 et 11
 - Pagination de `/reports` : actuellement un compteur de page suivi côté client (voir Statut de l'Étape 11) — passer à des liens numérotés ("1 2 3...") demanderait de connaître le nombre total de pages, calculable depuis `count` déjà renvoyé par l'API
-- Le cycle citoyen (accueil → inscription → carte → liste/détail → confirmation → création → profil) est maintenant complet de bout en bout ; la suite logique s'oriente vers les autres rôles (`municipal_admin`, `business`) ou vers le tableau de bord (section 12, déjà exposé côté API depuis l'Étape 8 mais sans interface)
+- `/dashboard` sur `?days=` de la timeline : actuellement fixé à la valeur par défaut du backend (30 jours) — un sélecteur (7/30/90 jours) serait un ajout simple, `getTimeline(days)` le supporte déjà côté client
+- Le dashboard entreprise (section 13, `user_type: "business"`) reste à construire, sur le même modèle de garde de rôle (`AdminOnly` généralisable en un `RoleGate` plus générique si un deuxième rôle apparaît)
+- Assigner une intervention à un signalement (section 5 : "assigner une intervention") n'a pas d'équivalent côté backend pour l'instant — nécessiterait un nouveau champ/modèle avant toute UI

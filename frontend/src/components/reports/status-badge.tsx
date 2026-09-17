@@ -1,6 +1,6 @@
 import type { ReportStatus } from "@/lib/api/types";
 
-const LABELS: Record<ReportStatus, string> = {
+export const STATUS_LABELS: Record<ReportStatus, string> = {
   new: "Nouveau",
   confirmed: "Confirmé",
   in_progress: "En cours",
@@ -19,7 +19,7 @@ const STYLES: Record<ReportStatus, string> = {
 export function StatusBadge({ status }: { status: ReportStatus }) {
   return (
     <span className={`inline-block border px-2 py-0.5 text-xs font-medium ${STYLES[status]}`}>
-      {LABELS[status]}
+      {STATUS_LABELS[status]}
     </span>
   );
 }

@@ -107,6 +107,76 @@ export interface PaginatedResponse<T> {
 }
 
 /**
+ * Types calqués sur apps.scoring.analytics (backend, Étape 8) — 4 endpoints
+ * réservés municipal_admin/platform_admin, jamais de statistique fabriquée :
+ * avg_resolution_hours vaut null tant qu'aucun signalement n'est résolu,
+ * plutôt qu'un zéro trompeur (voir apps.scoring.analytics.get_overview).
+ */
+export interface AnalyticsOverview {
+  total_reports: number;
+  active_reports: number;
+  resolved_reports: number;
+  rejected_reports: number;
+  by_status: Record<ReportStatus, number>;
+  by_severity: Record<ReportSeverity, number>;
+  by_category: { category: string; count: number }[];
+  avg_resolution_hours: number | null;
+}
+
+export interface DistrictStats {
+  district: string;
+  district_id: string;
+  total_reports: number;
+  active_reports: number;
+  resolved_reports: number;
+  critical_active_reports: number;
+  avg_priority_score: number | null;
+}
+
+export interface TimelinePoint {
+  date: string;
+  count: number;
+}
+
+export interface AnalyticsTimeline {
+  window_days: number;
+  created: TimelinePoint[];
+  resolved: TimelinePoint[];
+}
+
+export interface HeatmapPoint {
+  report_id: string;
+  lat: number;
+  lon: number;
+  weight: number;
+}
+
+/**
+ * Calqué sur apps.ai_engine.serializers.AIAnalysisSerializer (backend,
+ * Étape 6) — réservé aux admins via GET /reports/{id}/ai_analyses/.
+ * `result` varie selon `analysis_type` (classification/résumé/doublons) ;
+ * pas de type précis par variante ici, juste un dict — le composant qui
+ * l'affiche connaît la forme attendue pour chaque type.
+ */
+export type AIAnalysisType =
+  | "classification"
+  | "duplicate_detection"
+  | "summary"
+  | "image_analysis"
+  | "anomaly"
+  | "prediction";
+
+export interface AIAnalysis {
+  id: string;
+  analysis_type: AIAnalysisType;
+  provider: string;
+  result: Record<string, unknown>;
+  confidence: number | null;
+  data_source: "real" | "demo" | "predicted";
+  created_at: string;
+}
+
+/**
  * Forme normalisée des erreurs DRF : soit {"detail": "..."} pour une erreur
  * générique (401/403/404), soit un dict champ -> liste de messages pour les
  * erreurs de validation (400) — voir ApiError plus bas qui les unifie.

@@ -23,6 +23,11 @@ export function Navbar() {
               <Link href="/reports" className="text-ink-soft transition-colors hover:text-ink">
                 Signalements
               </Link>
+              {(user.user_type === "municipal_admin" || user.user_type === "platform_admin") && (
+                <Link href="/dashboard" className="text-ink-soft transition-colors hover:text-ink">
+                  Tableau de bord
+                </Link>
+              )}
               <Link
                 href="/create-report"
                 className="border border-ink px-4 py-1.5 transition-colors hover:border-laterite hover:text-laterite"
